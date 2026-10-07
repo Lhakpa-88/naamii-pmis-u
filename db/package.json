@@ -1,0 +1,15 @@
+{
+  "name": "@naamii/db",
+  "version": "0.1.0",
+  "private": true,
+  "description": "PostgreSQL schema, row-level security policies, demo seed and authorization tests for NAAMII PMIS",
+  "type": "module",
+  "scripts": {
+    "migrate": "node scripts/migrate.mjs",
+    "seed": "node scripts/seed.mjs",
+    "reset": "node scripts/reset.mjs",
+    "test": "vitest run"
+  },
+  "dependencies": { "pg": "^8" },
+  "devDependencies": { "vitest": "^3", "dotenv": "^16" }
+}

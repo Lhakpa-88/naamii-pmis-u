@@ -1,0 +1,110 @@
+# NAAMII PMIS — Project Management Information System
+
+Role-based project portfolio and financial dashboard for NAAMII. The same data produces different,
+role-appropriate views for the Executive Director, Principal Investigators, Project Leads and
+Finance & Operations — enforced in the database with PostgreSQL Row Level Security, not just on screen.
+
+> **Phase 0 (this release): Foundation & Demo Mode.** Database schema + row security, centralised
+> calculations, the Executive / Lab / Project dashboards, Admin read-only pages, and the authorization
+> test suite — all running on clearly-labelled **fictional demo data**. OneDrive sync, Entra sign-in
+> wiring and admin editing follow in Phases 2–3.
+
+## Quick start (local, no Docker needed)
+
+Prerequisites: Node 20+ and PostgreSQL 16 binaries (`sudo apt install postgresql-16` on Ubuntu;
+`brew install postgresql@16` on macOS). No real NAAMII data is used.
+
+```bash
+npm install
+cp .env.example .env            # defaults work locally; set SESSION_SECRET to any long random string
+npm run db:start                # starts a throw-away PostgreSQL on 127.0.0.1:5433
+npm run db:reset                # creates the database, applies migrations, seeds DEMO data
+npm run build -w @naamii/core   # shared calculations package
+npm run dev                     # http://localhost:3000
+```
+
+Sign in with one of the demo accounts (Demo Mode is on when `PMIS_AUTH_MODE=demo`):
+
+| Account | Role | What they see |
+| --- | --- | --- |
+| Demo Executive Director | ED | Everything, read-only, compensation visible |
+| Dr. Demo Pradhan (PI) | PI, AI & Mathematics Lab | Only that lab’s projects |
+| Dr. Demo Karki (PI) | PI, Computational Science Lab | Only that lab’s projects |
+| Demo Lead — Project Alpha | Project Lead | Project Alpha only |
+| Demo Lead — Project Gamma | Project Lead | Project Gamma only |
+| Demo Finance & Operations | Admin | Everything + Administration pages |
+
+Try it: sign in as the AI & Mathematics PI and open `/projects/30000000-0000-4000-8000-000000000003`
+(Project Gamma, another lab). You get “not available” — the database returned no row.
+
+## Tests
+
+```bash
+npm run test -w @naamii/core    # unit tests for every formula and health rule
+npm run test:authz              # the 7 critical authorization cases against real Row Level Security
+npm run lint && npm run build   # lint + production build
+```
+
+The authorization suite (`db/test/authz.test.ts`) connects as the application role exactly as the web
+app does and proves: ED sees all; PI sees own lab only; PI cannot fetch another lab’s project by id;
+Project Lead sees own project only and cannot fetch another; Admin sees administration tables and
+nobody else does; changing a role/assignment/active flag changes access with no code change;
+compensation is visible to Admin and ED only. CI runs all of this on every push (`.github/workflows/ci.yml`).
+
+## How it is built
+
+```
+naamii-pmis/
+  app/                 Next.js 16 (App Router, TypeScript, Tailwind v4, Recharts) — PRESENTATION + secure server code
+    src/app            routes: (auth)/login, (dashboard)/{overview, labs, projects, admin/*}
+    src/components     NAAMII design system: KPI cards, tables, charts, shell, badges
+    src/lib            env, db (RLS-scoped transactions), auth (Demo / Entra), data access layer, formatting
+    src/proxy.ts       redirects unauthenticated requests before any page renders
+  packages/core/       BUSINESS LOGIC: domain types, calculations, configurable health rules, alerts, navigation model
+  db/                  DATA: SQL migrations (schema, RLS policies, views), demo seed, scripts, authorization tests
+  functions/, infra/   Phase 2 / Phase 4 placeholders (Azure Functions sync; Bicep)
+  docs/                architecture summary
+```
+
+**Security model.** The app connects as the low-privilege `pmis_app` role and runs every request inside
+a transaction that sets `app.user_id`. Policies in `db/migrations/0002_rls.sql` decide row visibility:
+ED/Admin → all; PI → projects in their labs; Project Lead → assigned projects; financial, milestone,
+risk and team rows inherit from the project; compensation lives in its own table visible to Admin + ED;
+configuration and import tables are Admin-only. Hidden menu items are a convenience — a URL cannot
+reach what the policy denies. The sync Function uses a separate `pmis_etl` role.
+
+**Calculations** are defined once in `packages/core` and unit-tested: Utilisation = Actual ÷ Budget,
+Remaining = Budget − Actual, Budget variance = Budget − Actual, Forecast variance = Forecast − Budget,
+Days remaining = End − Today, plus configurable traffic-light rules (`DEFAULT_HEALTH_RULES`) and
+data-driven alerts. Budget, Actual, Committed and Forecast are stored facts and never mixed.
+
+**Brand.** Tokens in `app/src/app/globals.css` follow NAAMII Brand Book 2026 (Helvetica Neue; Dark Blue
+Grey #454d59, Pure Red #db0505, Neutral Grey #737370, Cool Grey #a1a6b2, White). Pure Red is reserved
+for emphasis and the critical state; charts use the brand greys with forecast dashed; traffic lights use
+colour + shape + label. The logotype slot (sidebar / sign-in) takes the white reverse logo on Dark Blue Grey —
+add the asset under `app/public/brand/` when available.
+
+**Money.** NPR is shown with Nepali grouping and lakh/crore compact units; other currencies use
+Western grouping. Each project stores its own currency. Fiscal-year labels follow Nepal’s mid-July year.
+
+## Authentication modes
+
+| `PMIS_AUTH_MODE` | Behaviour |
+| --- | --- |
+| `demo` | Sign-in page lists the fictional demo accounts (only `@naamii-demo.test` users can ever be chosen). Local/dev only. |
+| `entra` | Azure App Service built-in authentication validates the Microsoft Entra ID token and forwards the principal; the app maps e-mail/object-id → PMIS user (`app.resolve_user`). Unmapped staff see a friendly “no role yet” message. |
+
+## Deploying to Azure (outline — Phase 4)
+
+App Service (Linux, Node 20+): `npm ci && npm run build && npm start`, settings from Key Vault
+(`DATABASE_URL`, `SESSION_SECRET`, `PMIS_AUTH_MODE=entra`, `PMIS_DEMO_BANNER=false`), built-in
+authentication = Microsoft Entra ID (your app registration). Database: Azure Database for PostgreSQL
+Flexible Server; run `npm run db:migrate` with `DATABASE_ADMIN_URL` and `PMIS_APP_PASSWORD` /
+`PMIS_ETL_PASSWORD` set. Do **not** seed demo data in production.
+
+## Roadmap
+
+- **Phase 1** — PI and Project dashboards hardened; drill-down polish; responsive tables.
+- **Phase 2** — Microsoft Graph nightly sync (Azure Function, managed identity), configurable mapping engine, validation, quarantine, Sync Now, manual upload, “Data last updated”.
+- **Phase 3** — Admin editing: users/roles, lab and project ownership, column mappings, data-quality review of failed imports.
+- **Phase 4** — Infra as code, Entra wiring, security review, performance, pilot and go-live.

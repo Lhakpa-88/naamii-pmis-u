@@ -1,0 +1,70 @@
+@import "tailwindcss";
+
+/* ------------------------------------------------------------------------
+   NAAMII design tokens — from Brand Book 2026.
+   Typeface: Helvetica Neue (sole brand typeface).
+   Palette : Dark Blue Grey #454d59 · Pure Red #db0505 · Neutral Grey #737370
+             Cool Grey #a1a6b2 · White #ffffff
+   Contrast rules: white bg → black / Dark Blue Grey text; Neutral Grey bg → black;
+   Pure Red bg → white; Dark Blue Grey bg → white.
+   ------------------------------------------------------------------------ */
+:root {
+  --naamii-ink: #454d59;      /* Dark Blue Grey */
+  --naamii-red: #db0505;      /* Pure Red — accent, reserved for emphasis and critical state */
+  --naamii-grey: #737370;     /* Neutral Grey */
+  --naamii-cool: #a1a6b2;     /* Cool Grey */
+  --naamii-white: #ffffff;
+
+  /* Derived neutrals (tints of the brand greys for surfaces and rules) */
+  --naamii-cool-100: #f4f5f7;
+  --naamii-cool-200: #e6e8ec;
+  --naamii-cool-300: #d2d5db;
+  --naamii-ink-700: #363c46;
+
+  /* Reserved status palette (traffic lights) — never reused as series colours */
+  --status-good: #2e7d4f;
+  --status-warning: #c47f00;
+  --status-critical: var(--naamii-red);
+  --status-unknown: var(--naamii-cool);
+
+  /* Chart series: monochrome brand pair; forecast is dashed (secondary encoding) */
+  --chart-actual: var(--naamii-ink);
+  --chart-budget: var(--naamii-cool);
+  --chart-budget-stroke: var(--naamii-grey);
+  --chart-forecast: var(--naamii-grey);
+  --chart-grid: var(--naamii-cool-200);
+  --chart-axis: var(--naamii-grey);
+}
+
+@theme inline {
+  --color-ink: var(--naamii-ink);
+  --color-ink-700: var(--naamii-ink-700);
+  --color-brand: var(--naamii-red);
+  --color-grey: var(--naamii-grey);
+  --color-cool: var(--naamii-cool);
+  --color-cool-100: var(--naamii-cool-100);
+  --color-cool-200: var(--naamii-cool-200);
+  --color-cool-300: var(--naamii-cool-300);
+  --color-good: var(--status-good);
+  --color-warning: var(--status-warning);
+  --color-critical: var(--status-critical);
+  --font-sans: "Helvetica Neue", Helvetica, Arial, "Liberation Sans", sans-serif;
+  --radius-card: 0.5rem;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  background: var(--naamii-cool-100);
+  color: var(--naamii-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Tabular figures keep money columns aligned */
+.tnum { font-variant-numeric: tabular-nums; }
+
+/* Focus ring in brand red, visible on every interactive element */
+:focus-visible { outline: 2px solid var(--naamii-red); outline-offset: 2px; }
