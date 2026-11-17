@@ -15,7 +15,10 @@ export const ROLE_AUTHORITY: Record<Role, string> = {
   project_lead: "Sees the projects ticked below and enters their forecast, milestones, risks and team.",
 };
 
-export function UserForm({ user, options, demoMode, isSelf }: { user?: UserDetail; options: UserFormOptions; demoMode: boolean; isSelf?: boolean }) {
+export interface PasswordInfo { hasPassword: boolean; mustChange: boolean; locked: boolean; lastLoginAt: string | null }
+
+export function UserForm({ user, options, authMode, password, isSelf }: { user?: UserDetail; options: UserFormOptions; authMode: "password" | "demo" | "entra"; password?: PasswordInfo; isSelf?: boolean }) {
+  const demoMode = authMode === "demo", passwordMode = authMode === "password";
   const labs = new Map<string, typeof options.projects>();
   for (const p of options.projects) labs.set(p.labName, [...(labs.get(p.labName) ?? []), p]);
   return (
@@ -25,7 +28,9 @@ export function UserForm({ user, options, demoMode, isSelf }: { user?: UserDetai
       <fieldset>
         <legend className="text-[13.5px] font-semibold text-ink">Identity — how this person signs in</legend>
         <p className={HINT}>
-          PMIS keeps no passwords. The person signs in with their NAAMII Microsoft account, and is recognised by the e-mail address below.
+          {passwordMode
+            ? "The person signs in with the e-mail address below as their user ID, and a password. You set the first password; they must replace it with their own the first time they sign in."
+            : "PMIS keeps no passwords. The person signs in with their NAAMII Microsoft account, and is recognised by the e-mail address below."}
           {demoMode ? " In Demo Mode only addresses ending in @naamii-demo.test can sign in; they appear on the demo sign-in page." : ""}
         </p>
         <div className="mt-3 grid gap-x-5 gap-y-3.5 md:grid-cols-2">
@@ -38,6 +43,28 @@ export function UserForm({ user, options, demoMode, isSelf }: { user?: UserDetai
             <input id="user-email" name="email" type="email" required maxLength={254} defaultValue={user?.email} className={INPUT} autoComplete="off" placeholder="name@naamii.org.np" />
             {user?.entraBound ? <p className={HINT}>This account has already signed in with Microsoft and is linked to it.</p> : null}
           </div>
+          {passwordMode ? (
+            <div>
+              <label htmlFor="user-password" className={LABEL}>{user ? "Reset password" : <>First password <span className="text-critical">*</span></>}</label>
+              <input id="user-password" name="password" type="text" required={!user} minLength={8} maxLength={72} className={INPUT} autoComplete="off" spellCheck={false} placeholder={user ? "leave empty to keep the current password" : ""} />
+              <p className={HINT}>
+                At least 8 characters, with a letter and a number. Give it to the person privately; it is stored only as a one-way hash and cannot be read back.
+                {user ? " Setting a new one also unlocks a locked account." : ""}
+              </p>
+            </div>
+          ) : null}
+          {passwordMode && user ? (
+            <div>
+              <p className={LABEL}>Password status</p>
+              <p className="rounded-md border border-cool-200 bg-cool-100 px-2.5 py-2 text-[13px] text-ink">
+                {!password?.hasPassword ? "No password yet — this person cannot sign in until you set one."
+                  : password.locked ? "Locked after too many wrong passwords. Set a new password to unlock."
+                  : password.mustChange ? "Waiting for the person to choose their own password."
+                  : "Set by the person."}
+              </p>
+              <p className={HINT}>{password?.lastLoginAt ? `Last signed in ${password.lastLoginAt}.` : "Has not signed in yet."}</p>
+            </div>
+          ) : null}
         </div>
       </fieldset>
 

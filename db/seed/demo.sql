@@ -292,3 +292,14 @@ INSERT INTO column_mappings (sheet_pattern, excel_column, target_entity, target_
 -- The seed itself is written by the owner, so audit rows record actor_role = owner.
 -- Clear them: they describe seeding, not real changes.
 TRUNCATE TABLE audit_log RESTART IDENTITY;
+
+-- ---------------------------------------------------------------------------
+-- Demo sign-in (PMIS_AUTH_MODE=password). Every DEMO account gets the same
+-- well-known password so the system can be tried out:
+--     user ID  = the account's e-mail above (e.g. admin.demo@naamii-demo.test)
+--     password = Naamii-Demo-2026
+-- These are fictional accounts on the reserved .test domain. Never seed a
+-- production database with this file; real passwords are set under Users & Roles.
+-- ---------------------------------------------------------------------------
+INSERT INTO user_credentials (user_id, password_hash, must_change)
+SELECT id, crypt('Naamii-Demo-2026', gen_salt('bf', 8)), false FROM users;

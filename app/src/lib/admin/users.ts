@@ -153,7 +153,7 @@ export async function loadUserChanges(q: Queryable, limit = 15): Promise<UserCha
      LEFT JOIN users actor ON actor.id = a.actor_user_id
      LEFT JOIN users subject ON subject.id::text = a.entity_id
      LEFT JOIN projects p ON p.id::text = COALESCE(a.after->>'project_id', a.before->>'project_id')
-     WHERE a.entity IN ('users', 'project_assignments', 'pi_lab') AND a.actor_user_id IS NOT NULL
+     WHERE a.entity IN ('users', 'project_assignments', 'pi_lab', 'user_credentials') AND a.actor_user_id IS NOT NULL
      ORDER BY a.at DESC, a.id DESC LIMIT $1`, [limit]);
   return rows.map((r) => {
     const who = r.subject ?? String(r.after?.name ?? r.before?.name ?? "a user");
@@ -167,6 +167,8 @@ export async function loadUserChanges(q: Queryable, limit = 15): Promise<UserCha
           ? `Changed ${who}: ${changed.map((k) => (k === "lab_id" ? "lab" : k === "active" ? (r.after?.active ? "reactivated" : "deactivated") : `${k} → ${String(r.after?.[k])}`)).join(", ")}`
           : `Saved ${who} (no change)`;
       }
+    } else if (r.entity === "user_credentials") {
+      summary = r.after?.must_change ? `Set a new password for ${who}` : `${who} changed their password`;
     } else if (r.entity === "project_assignments") {
       summary = `${r.action === "DELETE" ? "Removed" : "Assigned"} ${who} ${r.action === "DELETE" ? "from" : "to"} project ${r.project ?? ""}`.trim();
     } else {

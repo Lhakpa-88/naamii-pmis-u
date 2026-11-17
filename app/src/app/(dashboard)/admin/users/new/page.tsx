@@ -19,7 +19,7 @@ export default async function NewUserPage({ searchParams }: PageProps<"/admin/us
       <EntryNotice err={err} />
       <Card>
         <CardHeader title="New user" subtitle="Finance & Operations only · recorded in the audit log" />
-        <UserForm options={options} demoMode={env.authMode === "demo"} />
+        <UserForm options={options} authMode={env.authMode} />
       </Card>
     </>
   );

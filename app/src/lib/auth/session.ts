@@ -3,35 +3,51 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import { cookies, headers } from "next/headers";
 import { env } from "../env";
 
-export const DEMO_COOKIE = "pmis_demo_session";
+/** Session cookie for the password and demo sign-in modes (Entra uses the platform's own session). */
+export const SESSION_COOKIE = "pmis_session";
+export const SESSION_HOURS = 8;
 
 /** An authenticated identity before it is mapped to a PMIS user. */
 export interface Identity {
   email: string | null;
-  /** Microsoft Entra object id (SSO) or the demo user id (Demo Mode). */
+  /** Microsoft Entra object id (SSO) or the PMIS user id (password / demo sign-in). */
   subject: string | null;
-  source: "demo" | "entra";
+  source: "password" | "demo" | "entra";
 }
 
 function sign(value: string): string {
   return createHmac("sha256", env.sessionSecret).update(value).digest("base64url");
 }
 
-/** Demo Mode cookie: "<userId>.<hmac>". Tamper-evident even though it is only for fictional accounts. */
-export function createDemoSessionValue(userId: string): string {
-  return `${userId}.${sign(userId)}`;
+/**
+ * Cookie value "<userId>.<expiresAtMs>.<hmac>": signed, so it cannot be forged or
+ * extended, and it carries nothing but the user id — role and access are read
+ * from the database on every request, so a deactivated user is out at once.
+ */
+export function createSessionValue(userId: string, now = Date.now()): string {
+  const body = `${userId}.${now + SESSION_HOURS * 3600_000}`;
+  return `${body}.${sign(body)}`;
 }
 
-export function verifyDemoSessionValue(raw: string | undefined): string | null {
+export function verifySessionValue(raw: string | undefined, now = Date.now()): string | null {
   if (!raw) return null;
   const dot = raw.lastIndexOf(".");
   if (dot === -1) return null;
-  const userId = raw.slice(0, dot);
-  const mac = raw.slice(dot + 1);
-  const expected = sign(userId);
-  if (mac.length !== expected.length) return null;
-  return timingSafeEqual(Buffer.from(mac), Buffer.from(expected)) ? userId : null;
+  const body = raw.slice(0, dot), mac = raw.slice(dot + 1);
+  const expected = sign(body);
+  if (mac.length !== expected.length || !timingSafeEqual(Buffer.from(mac), Buffer.from(expected))) return null;
+  const [userId, expires] = body.split(".");
+  if (!userId || !expires || !(Number(expires) > now)) return null;
+  return userId;
 }
+
+export const sessionCookieOptions = () => ({
+  httpOnly: true,
+  sameSite: "lax" as const,
+  secure: env.isProduction,
+  path: "/",
+  maxAge: SESSION_HOURS * 3600,
+});
 
 interface EasyAuthClaim { typ: string; val: string }
 interface EasyAuthPrincipal { auth_typ?: string; claims?: EasyAuthClaim[] }
@@ -56,11 +72,10 @@ function parseEasyAuthPrincipal(b64: string | null): Identity | null {
 
 /** Resolve the request's identity according to PMIS_AUTH_MODE. */
 export async function getIdentity(): Promise<Identity | null> {
-  if (env.authMode === "demo") {
-    const raw = (await cookies()).get(DEMO_COOKIE)?.value;
-    const userId = verifyDemoSessionValue(raw);
-    return userId ? { email: null, subject: userId, source: "demo" } : null;
+  if (env.authMode === "entra") {
+    const h = await headers();
+    return parseEasyAuthPrincipal(h.get("x-ms-client-principal"));
   }
-  const h = await headers();
-  return parseEasyAuthPrincipal(h.get("x-ms-client-principal"));
+  const userId = verifySessionValue((await cookies()).get(SESSION_COOKIE)?.value);
+  return userId ? { email: null, subject: userId, source: env.authMode } : null;
 }

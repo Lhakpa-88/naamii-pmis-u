@@ -7,10 +7,11 @@ import { NextResponse, type NextRequest } from "next/server";
  */
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const mode = (process.env.PMIS_AUTH_MODE ?? "demo").toLowerCase();
+  const mode = (process.env.PMIS_AUTH_MODE ?? "password").toLowerCase();
 
-  if (mode === "demo") {
-    if (!request.cookies.get("pmis_demo_session")) {
+  // Password and Demo sign-in: a session cookie must be present (it is verified on the server).
+  if (mode !== "entra") {
+    if (!request.cookies.get("pmis_session")) {
       const url = request.nextUrl.clone();
       url.pathname = "/login";
       url.search = "";

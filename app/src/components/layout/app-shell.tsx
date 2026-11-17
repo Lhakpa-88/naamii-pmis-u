@@ -4,6 +4,7 @@ import { ROLE_LABEL, navItemsFor, type CurrentUser } from "@naamii/core";
 import { signOut } from "@/lib/auth/actions";
 import { formatDateTime } from "@/lib/format";
 import type { Freshness } from "@/lib/data/portfolio";
+import { NaamiiLogo } from "@/components/ui/logo";
 import { SidebarNav } from "./sidebar-nav";
 
 export function DemoBanner() {
@@ -14,16 +15,16 @@ export function DemoBanner() {
   );
 }
 
-export function AppShell({ user, freshness, demo, children }: { user: CurrentUser; freshness: Freshness; demo: boolean; children: ReactNode }) {
+export function AppShell({ user, freshness, demo, canChangePassword, children }: { user: CurrentUser; freshness: Freshness; demo: boolean; canChangePassword?: boolean; children: ReactNode }) {
   const items = navItemsFor(user.role);
   return (
     <div className="flex min-h-screen">
       {/* Sidebar: Dark Blue Grey background → white text (brand contrast rule) */}
       <aside className="hidden w-60 shrink-0 flex-col bg-ink px-3 py-5 text-white md:flex">
-        <Link href="/" className="mb-7 flex items-baseline gap-2 px-3" aria-label="NAAMII PMIS home">
-          {/* Logo placeholder: the white (reverse) logotype goes here on the Dark Blue Grey background. */}
-          <span className="text-[20px] font-bold tracking-tight">NAAMII</span>
-          <span className="text-[12px] font-medium uppercase tracking-widest text-white/70">PMIS</span>
+        <Link href="/" className="mb-6 block" aria-label="NAAMII PMIS home">
+          {/* Full-colour logo on a white tile: the brand allows it on white only, not on Dark Blue Grey. */}
+          <span className="flex justify-center rounded-md bg-white px-3 py-2.5"><NaamiiLogo width={186} priority /></span>
+          <span className="mt-2 block px-3 text-[11px] font-medium uppercase tracking-widest text-white/70">PMIS</span>
         </Link>
         <SidebarNav items={items} />
         <div className="mt-auto px-3 pt-6 text-[11px] leading-relaxed text-white/55">
@@ -46,6 +47,7 @@ export function AppShell({ user, freshness, demo, children }: { user: CurrentUse
               <p className="text-[13px] font-semibold text-ink">{user.name}</p>
               <p className="text-[11.5px] text-grey">{ROLE_LABEL[user.role]}</p>
             </div>
+            {canChangePassword ? <Link href="/account/password" className="text-[12.5px] font-medium text-ink underline decoration-cool-300 underline-offset-2 hover:decoration-ink">Change password</Link> : null}
             <form action={signOut}>
               <button type="submit" className="rounded-md border border-cool-300 px-3 py-1.5 text-[12.5px] font-medium text-ink hover:bg-cool-100">
                 Sign out

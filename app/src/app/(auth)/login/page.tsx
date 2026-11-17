@@ -1,39 +1,66 @@
 import { redirect } from "next/navigation";
 import { ROLE_LABEL, type Role } from "@naamii/core";
-import { signInAsDemo } from "@/lib/auth/actions";
+import { signInAsDemo, signInWithPassword } from "@/lib/auth/actions";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { anonymousQuery } from "@/lib/db";
 import { env } from "@/lib/env";
 import { DemoBanner } from "@/components/layout/app-shell";
+import { NaamiiLogo } from "@/components/ui/logo";
 
 export const metadata = { title: "Sign in" };
 
 interface DemoAccount { id: string; email: string; name: string; role: Role; lab_name: string | null }
+
+const INPUT = "w-full rounded-md border border-cool-300 bg-white px-3 py-2.5 text-[14px] text-ink focus:border-ink focus:outline-none focus:ring-1 focus:ring-ink";
+
+const ERRORS: Record<string, string> = {
+  invalid: "The user ID or password is not correct.",
+  missing: "Enter your user ID and your password.",
+  locked: "Too many wrong passwords. This account is locked for 15 minutes; after that, try again or ask Finance & Operations to reset your password.",
+};
 
 export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   const user = await getCurrentUser();
   if (user) redirect("/");
   const params = await searchParams;
   const reason = typeof params.reason === "string" ? params.reason : undefined;
+  const error = typeof params.error === "string" ? ERRORS[params.error] : undefined;
 
-  const demo = env.authMode === "demo";
-  const accounts = demo ? (await anonymousQuery<DemoAccount>("SELECT id, email, name, role, lab_name FROM app.demo_accounts()")).rows : [];
+  const mode = env.authMode;
+  const accounts = mode === "demo" ? (await anonymousQuery<DemoAccount>("SELECT id, email, name, role, lab_name FROM app.demo_accounts()")).rows : [];
 
   return (
     <div className="flex min-h-screen flex-col bg-cool-100">
-      {demo && env.demoBanner ? <DemoBanner /> : null}
+      {env.demoBanner ? <DemoBanner /> : null}
       <div className="flex flex-1 items-center justify-center px-6 py-10">
-        <div className="w-full max-w-lg">
-          {/* Brand block: Dark Blue Grey → white text (brand contrast rule); reverse logotype goes here */}
-          <div className="rounded-t-card bg-ink px-8 py-7 text-white">
-            <div className="flex items-baseline gap-2">
-              <span className="text-[26px] font-bold tracking-tight">NAAMII</span>
-              <span className="text-[13px] font-medium uppercase tracking-widest text-white/70">PMIS</span>
-            </div>
-            <p className="mt-1 text-[13.5px] text-white/80">Project Management Information System</p>
+        <div className={`w-full ${mode === "demo" ? "max-w-lg" : "max-w-md"}`}>
+          {/* Brand block: the full-colour logo on white (brand contrast rule), over a Dark Blue Grey title strip */}
+          <div className="rounded-t-card border border-b-0 border-cool-200 bg-white px-8 pb-5 pt-7">
+            <NaamiiLogo width={260} priority />
+          </div>
+          <div className="bg-ink px-8 py-3 text-white">
+            <p className="text-[13.5px] font-medium">Project Management Information System <span className="ml-1 text-[12px] uppercase tracking-widest text-white/70">PMIS</span></p>
           </div>
           <div className="rounded-b-card border border-t-0 border-cool-200 bg-white px-8 py-7">
-            {demo ? (
+            {mode === "password" ? (
+              <>
+                <h1 className="text-[17px] font-semibold text-ink">Sign in</h1>
+                <p className="mt-1 text-[13px] text-grey">Use the user ID and password given to you by Finance &amp; Operations.</p>
+                {error ? <p role="alert" className="mt-4 rounded-md border border-critical/30 bg-critical/5 px-3 py-2 text-[13px] text-critical">{error}</p> : null}
+                <form action={signInWithPassword} className="mt-5 flex flex-col gap-4">
+                  <div>
+                    <label htmlFor="login-user" className="mb-1 block text-[13px] font-medium text-ink">User ID</label>
+                    <input id="login-user" name="userId" type="email" required autoFocus autoComplete="username" maxLength={254} placeholder="your e-mail address" className={INPUT} />
+                  </div>
+                  <div>
+                    <label htmlFor="login-password" className="mb-1 block text-[13px] font-medium text-ink">Password</label>
+                    <input id="login-password" name="password" type="password" required autoComplete="current-password" maxLength={200} className={INPUT} />
+                  </div>
+                  <button type="submit" className="mt-1 rounded-md bg-brand px-5 py-2.5 text-[14px] font-semibold text-white hover:bg-[#b80404]">Sign in</button>
+                </form>
+                <p className="mt-5 text-[12.5px] text-grey">Forgot your password, or no account yet? Ask Finance &amp; Operations — they can reset it or add you.</p>
+              </>
+            ) : mode === "demo" ? (
               <>
                 <h1 className="text-[17px] font-semibold text-ink">Demo Mode — choose a role to explore</h1>
                 <p className="mt-1 text-[13px] text-grey">Each account sees only what its role allows. Switch accounts to see the same data filtered differently.</p>

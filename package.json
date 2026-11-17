@@ -15,6 +15,7 @@
     "db:reset": "npm run reset -w @naamii/db",
     "db:migrate": "npm run migrate -w @naamii/db",
     "db:seed": "npm run seed -w @naamii/db",
+    "db:set-password": "node db/scripts/set-password.mjs",
     "test:authz": "npm run test -w @naamii/db"
   },
   "engines": { "node": ">=20" }

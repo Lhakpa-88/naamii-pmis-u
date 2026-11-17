@@ -20,6 +20,8 @@ export interface CurrentUser {
   name: string;
   role: Role;
   labId: string | null;
+  /** Password sign-in: the password was set by an administrator and must be replaced before continuing. */
+  mustChangePassword?: boolean;
 }
 
 export interface ProjectSummary {

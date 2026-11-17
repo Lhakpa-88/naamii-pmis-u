@@ -23,16 +23,27 @@ npm run build -w @naamii/core   # shared calculations package
 npm run dev                     # http://localhost:3000
 ```
 
-Sign in with one of the demo accounts (Demo Mode is on when `PMIS_AUTH_MODE=demo`):
+Sign in with a **user ID (the account’s e-mail) and password** (`PMIS_AUTH_MODE=password`, the default).
+The demo accounts all share the demo password written at the end of `db/seed/demo.sql`:
 
-| Account | Role | What they see |
+| User ID | Role | What they see |
 | --- | --- | --- |
-| Demo Executive Director | ED | Everything, read-only, compensation visible |
-| Dr. Demo Pradhan (PI) | PI, AI & Mathematics Lab | Only that lab’s projects |
-| Dr. Demo Karki (PI) | PI, Computational Science Lab | Only that lab’s projects |
-| Demo Lead — Project Alpha | Project Lead | Project Alpha only |
-| Demo Lead — Project Gamma | Project Lead | Project Gamma only |
-| Demo Finance & Operations | Admin | Everything + Administration pages |
+| `ed.demo@naamii-demo.test` | ED | Everything, read-only, compensation visible |
+| `pi.aim.demo@naamii-demo.test` | PI, AI & Mathematics Lab | Only that lab’s projects |
+| `pi.csl.demo@naamii-demo.test` | PI, Computational Science Lab | Only that lab’s projects |
+| `lead.alpha.demo@naamii-demo.test` | Project Lead | Project Alpha only |
+| `lead.gamma.demo@naamii-demo.test` | Project Lead | Project Gamma only |
+| `admin.demo@naamii-demo.test` | Admin | Everything + Administration pages |
+
+**Passwords.** Only a salted bcrypt hash is stored, in a table the web application’s database role
+cannot read (`db/migrations/0009_password_login.sql`). Finance & Operations sets a person’s first
+password (and resets a forgotten one) under Users & Roles; the person must replace it at first sign-in
+and can change it later from the header. Five wrong passwords lock an account for 15 minutes; a reset
+unlocks it. Sessions last 8 hours. For the very first administrator of a real installation:
+`PMIS_NEW_PASSWORD=… npm run db:set-password -- <e-mail>`.
+
+Other modes: `PMIS_AUTH_MODE=demo` (pick a demo account, no password — local demos only) and
+`PMIS_AUTH_MODE=entra` (Microsoft Entra single sign-on on Azure App Service).
 
 Try it: sign in as the AI & Mathematics PI and open `/projects/30000000-0000-4000-8000-000000000003`
 (Project Gamma, another lab). You get “not available” — the database returned no row.

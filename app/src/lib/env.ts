@@ -1,7 +1,7 @@
 import "server-only";
 
 /** Typed access to server-side settings. Values come from the root .env (see next.config.ts). */
-export type AuthMode = "demo" | "entra";
+export type AuthMode = "password" | "demo" | "entra";
 
 function required(name: string): string {
   const v = process.env[name];
@@ -14,8 +14,8 @@ export const env = {
     return required("DATABASE_URL");
   },
   get authMode(): AuthMode {
-    const m = (process.env.PMIS_AUTH_MODE ?? "demo").toLowerCase();
-    if (m !== "demo" && m !== "entra") throw new Error(`PMIS_AUTH_MODE must be 'demo' or 'entra' (got '${m}')`);
+    const m = (process.env.PMIS_AUTH_MODE ?? "password").toLowerCase();
+    if (m !== "password" && m !== "demo" && m !== "entra") throw new Error(`PMIS_AUTH_MODE must be 'password', 'demo' or 'entra' (got '${m}')`);
     return m;
   },
   get sessionSecret(): string {

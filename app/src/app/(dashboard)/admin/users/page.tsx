@@ -4,6 +4,8 @@ import { requireRole } from "@/lib/auth/current-user";
 import { withUser } from "@/lib/db";
 import { loadUsers } from "@/lib/data/admin";
 import { loadUserChanges } from "@/lib/admin/users";
+import { loadPasswordStatus } from "@/lib/auth/passwords";
+import { env } from "@/lib/env";
 import { formatDateTime } from "@/lib/format";
 import { ROLE_AUTHORITY } from "@/components/admin/user-form";
 import { EntryNotice } from "@/components/entry/record-editor";
@@ -12,10 +14,18 @@ import { PageHeader } from "@/components/ui/page-header";
 
 export const metadata = { title: "Users & roles" };
 
+function signInState(p: { hasPassword: boolean; mustChange: boolean; locked: boolean; lastLoginAt: Date | null } | undefined) {
+  if (!p?.hasPassword) return <span className="font-medium text-critical">No password set</span>;
+  if (p.locked) return <span className="font-medium text-critical">Locked</span>;
+  if (p.mustChange) return "First password not yet changed";
+  return p.lastLoginAt ? `Last signed in ${formatDateTime(p.lastLoginAt.toISOString())}` : "Password set";
+}
+
 export default async function UsersPage({ searchParams }: PageProps<"/admin/users">) {
   const user = await requireRole("admin");
   const { ok, err } = (await searchParams) as { ok?: string; err?: string };
-  const { users, changes } = await withUser(user.id, async (q) => ({ users: await loadUsers(q), changes: await loadUserChanges(q) }));
+  const { users, changes, passwords } = await withUser(user.id, async (q) => ({ users: await loadUsers(q), changes: await loadUserChanges(q), passwords: await loadPasswordStatus(q) }));
+  const passwordMode = env.authMode === "password";
   const active = users.filter((u) => u.active).length;
   return (
     <>
@@ -31,7 +41,7 @@ export default async function UsersPage({ searchParams }: PageProps<"/admin/user
         <div className="overflow-x-auto">
           <table className="w-full text-[13px]">
             <thead className="bg-cool-100 text-[11.5px] uppercase tracking-wide text-grey">
-              <tr><th className="px-5 py-2 text-left font-semibold">Name</th><th className="px-3 py-2 text-left font-semibold">E-mail</th><th className="px-3 py-2 text-left font-semibold">Role</th><th className="px-3 py-2 text-left font-semibold">Lab</th><th className="px-3 py-2 text-right font-semibold">Projects</th><th className="px-3 py-2 text-left font-semibold">Microsoft sign-in</th><th className="px-3 py-2 text-left font-semibold">Status</th><th className="px-5 py-2" /></tr>
+              <tr><th className="px-5 py-2 text-left font-semibold">Name</th><th className="px-3 py-2 text-left font-semibold">E-mail</th><th className="px-3 py-2 text-left font-semibold">Role</th><th className="px-3 py-2 text-left font-semibold">Lab</th><th className="px-3 py-2 text-right font-semibold">Projects</th><th className="px-3 py-2 text-left font-semibold">{passwordMode ? "Sign-in" : "Microsoft sign-in"}</th><th className="px-3 py-2 text-left font-semibold">Status</th><th className="px-5 py-2" /></tr>
             </thead>
             <tbody>
               {users.map((u) => (
@@ -41,7 +51,7 @@ export default async function UsersPage({ searchParams }: PageProps<"/admin/user
                   <td className="px-3 py-2">{ROLE_LABEL[u.role]}</td>
                   <td className="px-3 py-2">{u.lab_name ?? "—"}</td>
                   <td className="tnum px-3 py-2 text-right">{u.projects}</td>
-                  <td className="px-3 py-2 text-grey">{u.entra_bound ? "Linked" : "Not yet signed in"}</td>
+                  <td className="px-3 py-2 text-grey">{passwordMode ? signInState(passwords.get(u.id)) : u.entra_bound ? "Linked" : "Not yet signed in"}</td>
                   <td className="px-3 py-2">{u.active ? <span className="text-good">Active</span> : <span className="font-medium text-critical">Deactivated</span>}</td>
                   <td className="px-5 py-2 text-right"><Link href={`/admin/users/${u.id}`} className="font-medium text-ink underline decoration-cool-300 underline-offset-2 hover:decoration-ink">Edit</Link></td>
                 </tr>
