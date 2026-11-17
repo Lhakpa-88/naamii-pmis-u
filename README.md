@@ -61,12 +61,27 @@ The Executive Director and PIs stay read-only. Every field is defined once in
 `packages/core/src/entry.ts`; the template, the importer and the forms are all generated from it.
 Every change is written to `audit_log`; uploads are listed under Administration → Data Imports.
 
+## User management
+
+Finance & Operations (the `admin` role) administers the system under **Administration → Users & Roles**:
+"Add user" creates an account, "Edit" changes it. An account has two parts:
+
+- **Identity (authentication)** — name and e-mail. PMIS stores no passwords: the person signs in with
+  Microsoft Entra ID and is matched by e-mail. In Demo Mode, accounts added on `@naamii-demo.test`
+  appear on the demo sign-in page.
+- **Authority (authorization)** — the role, the lab a PI leads, and the projects a Project Lead may see
+  and enter data for. Unticking "Active" blocks sign-in at once; users are never deleted.
+
+Only the admin role can write to `users`, `pi_lab` and `project_assignments` (Row Level Security), an
+administrator cannot demote or deactivate their own account, and the last active administrator cannot
+be removed (`db/migrations/0008_user_management.sql`). Every change appears under "Recent changes".
+
 ## Tests
 
 ```bash
 npm run test -w @naamii/core    # unit tests for every formula and health rule
 npm run test:authz              # the 7 critical authorization cases against real Row Level Security
-npm run test:entry              # Excel template, import and forms — per role, against the real database
+npm run test:entry              # Excel template, import, forms and user management — per role, against the real database
 npm run lint && npm run build   # lint + production build
 ```
 
