@@ -39,7 +39,7 @@ const lc = (s: string) => s.trim().toLowerCase();
 
 /** Reference values the caller is entitled to see (RLS applies to projects). */
 export async function loadRefData(q: Queryable): Promise<RefData> {
-  const labs = await q.query<{ id: string; code: string }>("SELECT id, code FROM labs WHERE active");
+  const labs = await q.query<{ id: string; code: string }>("SELECT id, code FROM labs"); // retired labs too: their projects still refer to them
   const users = await q.query<{ id: string; email: string; role: string }>("SELECT id, email, role FROM users WHERE active");
   const projects = await q.query<{ id: string; code: string; currency: string }>("SELECT id, code, currency FROM projects");
   return {

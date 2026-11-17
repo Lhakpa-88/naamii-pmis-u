@@ -52,6 +52,7 @@ export function navItemsFor(role: Role): NavItem[] {
         { label: "Data Imports", href: "/admin/data", section: "Administration" },
         { label: "Data Quality", href: "/admin/data-quality", section: "Administration" },
         { label: "Users & Roles", href: "/admin/users", section: "Administration" },
+        { label: "Manage Labs", href: "/admin/labs", section: "Administration" },
         { label: "Column Mappings", href: "/admin/mappings", section: "Administration" },
       ];
   }

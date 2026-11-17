@@ -60,7 +60,7 @@ export function UserForm({ user, options, demoMode, isSelf }: { user?: UserDetai
             <label htmlFor="user-lab" className={LABEL}>Lab</label>
             <select id="user-lab" name="labId" defaultValue={user?.labId ?? ""} className={INPUT}>
               <option value="">— none —</option>
-              {options.labs.map((l) => <option key={l.id} value={l.id}>{l.name} ({l.code})</option>)}
+              {options.labs.filter((l) => l.active || l.id === user?.labId).map((l) => <option key={l.id} value={l.id}>{l.name} ({l.code}){l.active ? "" : " — retired"}</option>)}
             </select>
             <p className={HINT}>Required for a Principal Investigator (the lab they lead). Optional home lab for a Project Lead. Ignored for other roles.</p>
           </div>

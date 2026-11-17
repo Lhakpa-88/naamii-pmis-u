@@ -76,6 +76,15 @@ Only the admin role can write to `users`, `pi_lab` and `project_assignments` (Ro
 administrator cannot demote or deactivate their own account, and the last active administrator cannot
 be removed (`db/migrations/0008_user_management.sql`). Every change appears under "Recent changes".
 
+## Lab management
+
+Labs are data, not code. Under **Administration → Manage Labs** Finance & Operations can add a lab,
+rename it, change its code or PI, retire it (untick "Active") or delete it. Every lab pick-list — the
+project form, the user form and the Lists sheet of the Excel template — reads the `labs` table, so a
+change shows up everywhere at once. A lab that still has projects cannot be deleted; retire it instead.
+Deleting a lab keeps its people and only clears their link to it. Other roles cannot change labs
+(Row Level Security), and every change is written to `audit_log`.
+
 ## Tests
 
 ```bash

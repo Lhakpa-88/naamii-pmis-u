@@ -93,7 +93,11 @@ export async function saveUser(q: Queryable, input: UserInput): Promise<{ id: st
     }
 
     // PI → the lab they lead (drives which projects they see).
-    await q.query("DELETE FROM pi_lab WHERE user_id = $1 AND ($2::uuid IS NULL OR lab_id <> $2)", [id, input.role === "pi" ? input.labId : null]);
+    // (Labs that name this person as their PI under Manage Labs are kept while they remain a PI.)
+    await q.query(
+      "DELETE FROM pi_lab WHERE user_id = $1 AND ($2::uuid IS NULL OR (lab_id <> $2 AND lab_id NOT IN (SELECT id FROM labs WHERE pi_user_id = $1)))",
+      [id, input.role === "pi" ? input.labId : null]);
+    if (input.role !== "pi") await q.query("UPDATE labs SET pi_user_id = NULL WHERE pi_user_id = $1", [id]);
     if (input.role === "pi" && input.labId) {
       await q.query("INSERT INTO pi_lab (user_id, lab_id) VALUES ($1, $2) ON CONFLICT DO NOTHING", [id, input.labId]);
       await q.query("UPDATE labs SET pi_user_id = $1 WHERE id = $2 AND pi_user_id IS NULL", [id, input.labId]);
@@ -127,12 +131,12 @@ export async function loadUser(q: Queryable, id: string): Promise<UserDetail | n
 }
 
 export interface UserFormOptions {
-  labs: { id: string; code: string; name: string }[];
+  labs: { id: string; code: string; name: string; active: boolean }[];
   projects: { id: string; code: string; name: string; labName: string }[];
 }
 
 export async function loadUserFormOptions(q: Queryable): Promise<UserFormOptions> {
-  const labs = await q.query<{ id: string; code: string; name: string }>("SELECT id, code, name FROM labs WHERE active ORDER BY name");
+  const labs = await q.query<{ id: string; code: string; name: string; active: boolean }>("SELECT id, code, name, active FROM labs ORDER BY name");
   const projects = await q.query<{ id: string; code: string; name: string; lab_name: string }>(
     "SELECT p.id, p.code, p.name, l.name AS lab_name FROM projects p JOIN labs l ON l.id = p.lab_id ORDER BY l.name, p.name");
   return { labs: labs.rows, projects: projects.rows.map((p) => ({ id: p.id, code: p.code, name: p.name, labName: p.lab_name })) };
