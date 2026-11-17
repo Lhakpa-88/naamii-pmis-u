@@ -24,7 +24,9 @@ const nextConfig: NextConfig = {
   // dynamic, so we use the classic dynamic-rendering model rather than
   // Cache Components / partial prerendering.
   cacheComponents: false,
-  serverExternalPackages: ["pg"],
+  serverExternalPackages: ["pg", "exceljs"],
+  // Excel uploads (data entry) are posted to a server action.
+  experimental: { serverActions: { bodySizeLimit: "10mb" } },
   turbopack: {
     rules: {
       "*.css": {

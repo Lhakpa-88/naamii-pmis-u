@@ -12,7 +12,7 @@ export default async function DataImportsPage() {
   const { runs, files } = await withUser(user.id, (q) => loadImportRuns(q));
   return (
     <>
-      <PageHeader title="Data imports" subtitle="Synchronisation runs from OneDrive and manual uploads. “Sync Now” and uploads arrive in Phase 2." crumbs={[{ label: "NAAMII", href: "/" }, { label: "Administration" }, { label: "Data imports" }]} />
+      <PageHeader title="Data imports" subtitle="Excel uploads made under Data Entry, and synchronisation runs. Scheduled OneDrive sync arrives in Phase 2." crumbs={[{ label: "NAAMII", href: "/" }, { label: "Administration" }, { label: "Data imports" }]} />
       <Card>
         <CardHeader title="Import runs" subtitle="Most recent first" />
         {runs.length === 0 ? <CardBody><p className="text-[13px] text-grey">No import runs yet.</p></CardBody> : runs.map((r) => (

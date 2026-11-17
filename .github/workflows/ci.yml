@@ -35,5 +35,7 @@ jobs:
         run: npm run db:migrate && npm run db:seed
       - name: Authorization tests (the 7 critical RBAC cases, against real Row Level Security)
         run: npm run test -w @naamii/db
+      - name: Data-entry tests (Excel template, import and forms, against real Row Level Security)
+        run: npm run test -w @naamii/app
       - name: Lint + build app
         run: npm run lint -w @naamii/app && npm run build -w @naamii/app

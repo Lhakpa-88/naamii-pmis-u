@@ -1,5 +1,6 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
-import { isMilestoneOverdue, remainingBudget, uncommittedBudget, forecastVariance, type Health } from "@naamii/core";
+import { canEnterData, isMilestoneOverdue, remainingBudget, uncommittedBudget, forecastVariance, type Health } from "@naamii/core";
 import { requireUser } from "@/lib/auth/current-user";
 import { withUser } from "@/lib/db";
 import { loadProjectDetail } from "@/lib/data/portfolio";
@@ -55,7 +56,10 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[proj
             <div><dt className="inline text-grey">Status </dt><dd className="inline"><StatusBadge status={s.status} /></dd></div>
           </dl>
         }
-        actions={<HealthBadge health={p.health.overall} />}
+        actions={<>
+          {canEnterData(user.role) ? <Link href={`/projects/${s.id}/edit`} className="rounded-md border border-cool-300 bg-white px-3.5 py-2 text-[13px] font-medium text-ink hover:bg-cool-100">Enter data</Link> : null}
+          <HealthBadge health={p.health.overall} />
+        </>}
       />
 
       <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6">
@@ -167,7 +171,7 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[proj
         </div>
       </div>
 
-      <p className="mt-5 text-[11.5px] text-grey">Source: {p.summary.code} · figures derived from the project workbook as imported; this view does not alter source records.</p>
+      <p className="mt-5 text-[11.5px] text-grey">Source: {p.summary.code} · figures as imported from Excel or entered in PMIS; every change is recorded in the audit log.</p>
     </>
   );
 }

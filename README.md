@@ -37,11 +37,36 @@ Sign in with one of the demo accounts (Demo Mode is on when `PMIS_AUTH_MODE=demo
 Try it: sign in as the AI & Mathematics PI and open `/projects/30000000-0000-4000-8000-000000000003`
 (Project Gamma, another lab). You get “not available” — the database returned no row.
 
+## Data entry
+
+Data reaches PMIS in two ways, both under **Data Entry** in the sidebar:
+
+1. **Import from Excel** — download the template (`/data-entry/template`; add `?data=1` to have current
+   records filled in), complete it in Excel and upload it. "Check file" validates without saving; "Import"
+   saves **all rows or none** and lists every problem by sheet, row and column. Re-importing is safe: rows
+   are matched on their natural key (project code, project + month, project + milestone …) and updated.
+2. **Forms** — `/projects/<id>/edit` (the "Enter data" button on a project) and `/data-entry/projects/new`.
+
+Two entry points, enforced in the database (`db/migrations/0006_data_entry.sql`, `0007_lead_forecast.sql`):
+
+| Data | Finance & Operations (`admin`) | Project Lead (`project_lead`) |
+| --- | --- | --- |
+| Projects (master record, budget, people) | enters | view only |
+| Monthly budget, actual, committed | enters | view only |
+| Monthly forecast | enters | enters, own projects only |
+| Milestones, Risks, Team | enters | enters, own projects only |
+| Staff monthly cost | enters | hidden |
+
+The Executive Director and PIs stay read-only. Every field is defined once in
+`packages/core/src/entry.ts`; the template, the importer and the forms are all generated from it.
+Every change is written to `audit_log`; uploads are listed under Administration → Data Imports.
+
 ## Tests
 
 ```bash
 npm run test -w @naamii/core    # unit tests for every formula and health rule
 npm run test:authz              # the 7 critical authorization cases against real Row Level Security
+npm run test:entry              # Excel template, import and forms — per role, against the real database
 npm run lint && npm run build   # lint + production build
 ```
 

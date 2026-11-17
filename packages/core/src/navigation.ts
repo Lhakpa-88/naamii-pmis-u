@@ -9,7 +9,7 @@ export interface NavItem {
   label: string;
   href: string;
   /** Optional grouping shown as a section heading. */
-  section?: "Dashboard" | "Administration";
+  section?: "Dashboard" | "Data" | "Administration";
 }
 
 export const ROLE_LABEL: Record<Role, string> = {
@@ -41,12 +41,14 @@ export function navItemsFor(role: Role): NavItem[] {
       return [
         { label: "My Project", href: "/", section: "Dashboard" },
         { label: "My Projects", href: "/projects", section: "Dashboard" },
+        { label: "Data Entry", href: "/data-entry", section: "Data" },
       ];
     case "admin":
       return [
         { label: "Executive Overview", href: "/", section: "Dashboard" },
         { label: "Labs", href: "/labs", section: "Dashboard" },
         { label: "Projects", href: "/projects", section: "Dashboard" },
+        { label: "Data Entry", href: "/data-entry", section: "Data" },
         { label: "Data Imports", href: "/admin/data", section: "Administration" },
         { label: "Data Quality", href: "/admin/data-quality", section: "Administration" },
         { label: "Users & Roles", href: "/admin/users", section: "Administration" },
