@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { ROLE_LABEL, type Role } from "@naamii/core";
-import { signInAsDemo, signInWithPassword } from "@/lib/auth/actions";
+import { signInAsDemo, signInForDevelopment, signInWithPassword } from "@/lib/auth/actions";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { anonymousQuery } from "@/lib/db";
 import { env } from "@/lib/env";
@@ -16,6 +16,8 @@ const INPUT = "w-full rounded-md border border-cool-300 bg-white px-3 py-2.5 tex
 const ERRORS: Record<string, string> = {
   invalid: "The user ID or password is not correct.",
   missing: "Enter your user ID and your password.",
+  "missing-id": "Enter a user ID.",
+  "unknown-id": "That user ID is not known. Use Admin, PI, PM or ED — or the e-mail address of an active user.",
   locked: "Too many wrong passwords. This account is locked for 15 minutes; after that, try again or ask Finance & Operations to reset your password.",
 };
 
@@ -27,6 +29,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   const error = typeof params.error === "string" ? ERRORS[params.error] : undefined;
 
   const mode = env.authMode;
+  const devAccounts = mode === "dev" ? (await anonymousQuery<{ shortcut: string; name: string; role: Role }>("SELECT shortcut, name, role FROM app.dev_accounts()")).rows : [];
   const accounts = mode === "demo" ? (await anonymousQuery<DemoAccount>("SELECT id, email, name, role, lab_name FROM app.demo_accounts()")).rows : [];
 
   return (
@@ -59,6 +62,34 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
                   <button type="submit" className="mt-1 rounded-md bg-brand px-5 py-2.5 text-[14px] font-semibold text-white hover:bg-[#b80404]">Sign in</button>
                 </form>
                 <p className="mt-5 text-[12.5px] text-grey">Forgot your password, or no account yet? Ask Finance &amp; Operations — they can reset it or add you.</p>
+              </>
+            ) : mode === "dev" ? (
+              <>
+                <h1 className="text-[17px] font-semibold text-ink">Sign in</h1>
+                <p className="mt-1 rounded-md border border-warning/40 bg-[#fff6e5] px-3 py-2 text-[12.5px] text-[#7a4f00]">Development and testing sign-in — no password is asked. Not for real data; switch to password sign-in before going live.</p>
+                {error ? <p role="alert" className="mt-4 rounded-md border border-critical/30 bg-critical/5 px-3 py-2 text-[13px] text-critical">{error}</p> : null}
+                <form action={signInForDevelopment} className="mt-5 flex flex-col gap-4">
+                  <div>
+                    <label htmlFor="login-user" className="mb-1 block text-[13px] font-medium text-ink">User ID</label>
+                    <input id="login-user" name="userId" type="text" required autoFocus autoComplete="off" autoCapitalize="none" spellCheck={false} maxLength={254} placeholder="Admin, PI, PM or ED" className={INPUT} />
+                  </div>
+                  <button type="submit" className="mt-1 rounded-md bg-brand px-5 py-2.5 text-[14px] font-semibold text-white hover:bg-[#b80404]">Sign in</button>
+                </form>
+                <table className="mt-5 w-full text-[12.5px]">
+                  <thead className="text-left text-[11px] uppercase tracking-wide text-grey"><tr><th className="py-1 font-semibold">User ID</th><th className="py-1 font-semibold">Signs in as</th></tr></thead>
+                  <tbody>
+                    {(["Admin", "PI", "PM", "ED"] as const).map((id) => {
+                      const a = devAccounts.find((d) => d.shortcut === id);
+                      return (
+                        <tr key={id} className="border-t border-cool-200">
+                          <td className="py-1.5 font-semibold text-ink">{id}</td>
+                          <td className="py-1.5 text-grey">{a ? <>{ROLE_LABEL[a.role]} <span className="text-cool">· {a.name}</span></> : "no active account with this role yet"}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+                <p className="mt-3 text-[12px] text-grey">The user ID is not case-sensitive. To try a specific person, type their e-mail address instead.</p>
               </>
             ) : mode === "demo" ? (
               <>

@@ -18,7 +18,7 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   if (!identity) return null;
 
   let row: ResolvedRow | undefined;
-  if (identity.source === "password") {
+  if (identity.source === "password" || identity.source === "dev") {
     // The cookie carries the (signed) user id; only an active user comes back.
     const { rows } = await anonymousQuery<ResolvedRow>(
       "SELECT id, email, name, role, lab_id, NULL::text AS entra_object_id, must_change FROM app.session_user($1)", [identity.subject]);
@@ -38,7 +38,7 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
     }
   }
   if (!row) return null;
-  return { id: row.id, email: row.email, name: row.name, role: row.role, labId: row.lab_id, mustChangePassword: row.must_change === true };
+  return { id: row.id, email: row.email, name: row.name, role: row.role, labId: row.lab_id, mustChangePassword: identity.source === "password" && row.must_change === true };
 });
 
 /** For pages: redirect to sign-in when there is no mapped, active user. */

@@ -17,7 +17,7 @@ export const ROLE_AUTHORITY: Record<Role, string> = {
 
 export interface PasswordInfo { hasPassword: boolean; mustChange: boolean; locked: boolean; lastLoginAt: string | null }
 
-export function UserForm({ user, options, authMode, password, isSelf }: { user?: UserDetail; options: UserFormOptions; authMode: "password" | "demo" | "entra"; password?: PasswordInfo; isSelf?: boolean }) {
+export function UserForm({ user, options, authMode, password, isSelf }: { user?: UserDetail; options: UserFormOptions; authMode: "password" | "dev" | "demo" | "entra"; password?: PasswordInfo; isSelf?: boolean }) {
   const demoMode = authMode === "demo", passwordMode = authMode === "password";
   const labs = new Map<string, typeof options.projects>();
   for (const p of options.projects) labs.set(p.labName, [...(labs.get(p.labName) ?? []), p]);
@@ -30,7 +30,9 @@ export function UserForm({ user, options, authMode, password, isSelf }: { user?:
         <p className={HINT}>
           {passwordMode
             ? "The person signs in with the e-mail address below as their user ID, and a password. You set the first password; they must replace it with their own the first time they sign in."
-            : "PMIS keeps no passwords. The person signs in with their NAAMII Microsoft account, and is recognised by the e-mail address below."}
+            : authMode === "dev"
+              ? "Development sign-in is on: no password is asked. The person can sign in by typing the e-mail address below as their user ID (Admin, PI, PM and ED are shortcuts for the first account of each role)."
+              : "PMIS keeps no passwords. The person signs in with their NAAMII Microsoft account, and is recognised by the e-mail address below."}
           {demoMode ? " In Demo Mode only addresses ending in @naamii-demo.test can sign in; they appear on the demo sign-in page." : ""}
         </p>
         <div className="mt-3 grid gap-x-5 gap-y-3.5 md:grid-cols-2">

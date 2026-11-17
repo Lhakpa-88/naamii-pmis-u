@@ -24,6 +24,18 @@ export async function signInWithPassword(formData: FormData) {
   redirect(result.must_change ? "/account/password" : "/");
 }
 
+/** Development sign-in: a user ID (Admin / PI / PM / ED, or an e-mail) and no password. Never available in production. */
+export async function signInForDevelopment(formData: FormData) {
+  if (env.authMode !== "dev") redirect("/login");
+  const typed = String(formData.get("userId") ?? "").trim().slice(0, 254);
+  if (!typed) redirect("/login?error=missing-id");
+  const { rows } = await anonymousQuery<{ id: string | null }>("SELECT app.dev_login($1) AS id", [typed]);
+  const id = rows[0]?.id;
+  if (!id) redirect("/login?error=unknown-id");
+  (await cookies()).set(SESSION_COOKIE, createSessionValue(id), sessionCookieOptions());
+  redirect("/");
+}
+
 /** Demo Mode only: sign in as one of the fictional demo accounts. */
 export async function signInAsDemo(formData: FormData) {
   if (env.authMode !== "demo") redirect("/login");

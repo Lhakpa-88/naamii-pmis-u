@@ -41,7 +41,7 @@ export default async function UsersPage({ searchParams }: PageProps<"/admin/user
         <div className="overflow-x-auto">
           <table className="w-full text-[13px]">
             <thead className="bg-cool-100 text-[11.5px] uppercase tracking-wide text-grey">
-              <tr><th className="px-5 py-2 text-left font-semibold">Name</th><th className="px-3 py-2 text-left font-semibold">E-mail</th><th className="px-3 py-2 text-left font-semibold">Role</th><th className="px-3 py-2 text-left font-semibold">Lab</th><th className="px-3 py-2 text-right font-semibold">Projects</th><th className="px-3 py-2 text-left font-semibold">{passwordMode ? "Sign-in" : "Microsoft sign-in"}</th><th className="px-3 py-2 text-left font-semibold">Status</th><th className="px-5 py-2" /></tr>
+              <tr><th className="px-5 py-2 text-left font-semibold">Name</th><th className="px-3 py-2 text-left font-semibold">E-mail</th><th className="px-3 py-2 text-left font-semibold">Role</th><th className="px-3 py-2 text-left font-semibold">Lab</th><th className="px-3 py-2 text-right font-semibold">Projects</th><th className="px-3 py-2 text-left font-semibold">{passwordMode || env.authMode === "dev" ? "Sign-in" : "Microsoft sign-in"}</th><th className="px-3 py-2 text-left font-semibold">Status</th><th className="px-5 py-2" /></tr>
             </thead>
             <tbody>
               {users.map((u) => (
@@ -51,7 +51,7 @@ export default async function UsersPage({ searchParams }: PageProps<"/admin/user
                   <td className="px-3 py-2">{ROLE_LABEL[u.role]}</td>
                   <td className="px-3 py-2">{u.lab_name ?? "—"}</td>
                   <td className="tnum px-3 py-2 text-right">{u.projects}</td>
-                  <td className="px-3 py-2 text-grey">{passwordMode ? signInState(passwords.get(u.id)) : u.entra_bound ? "Linked" : "Not yet signed in"}</td>
+                  <td className="px-3 py-2 text-grey">{passwordMode ? signInState(passwords.get(u.id)) : env.authMode === "dev" ? "No password asked (development)" : u.entra_bound ? "Linked" : "Not yet signed in"}</td>
                   <td className="px-3 py-2">{u.active ? <span className="text-good">Active</span> : <span className="font-medium text-critical">Deactivated</span>}</td>
                   <td className="px-5 py-2 text-right"><Link href={`/admin/users/${u.id}`} className="font-medium text-ink underline decoration-cool-300 underline-offset-2 hover:decoration-ink">Edit</Link></td>
                 </tr>

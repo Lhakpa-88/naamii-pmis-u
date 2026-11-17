@@ -42,6 +42,11 @@ and can change it later from the header. Five wrong passwords lock an account fo
 unlocks it. Sessions last 8 hours. For the very first administrator of a real installation:
 `PMIS_NEW_PASSWORD=… npm run db:set-password -- <e-mail>`.
 
+**Development sign-in.** While the system is being developed and tested, set `PMIS_AUTH_MODE=dev` in
+`.env`: the sign-in page then asks only for a user ID — `Admin`, `PI`, `PM` or `ED` (the first active
+account of that role), or any active user's e-mail — and **no password**. The app refuses to start in
+this mode with `NODE_ENV=production`. Switch back to `password` before real data or real users.
+
 Other modes: `PMIS_AUTH_MODE=demo` (pick a demo account, no password — local demos only) and
 `PMIS_AUTH_MODE=entra` (Microsoft Entra single sign-on on Azure App Service).
 

@@ -12,7 +12,7 @@ export interface Identity {
   email: string | null;
   /** Microsoft Entra object id (SSO) or the PMIS user id (password / demo sign-in). */
   subject: string | null;
-  source: "password" | "demo" | "entra";
+  source: "password" | "dev" | "demo" | "entra";
 }
 
 function sign(value: string): string {
